@@ -9,8 +9,16 @@ call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\v
 
 if not exist bin mkdir bin
 
+echo Compiling Windows Resources...
+rc.exe /nologo /fo res\app.res res\app.rc
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] Resource compilation failed.
+    exit /b %ERRORLEVEL%
+)
+
+echo Compiling C++ Source...
 cl.exe /nologo /O2 /W3 /Gy /GL /DUNICODE /D_UNICODE /DNDEBUG /EHsc ^
-    src\main.cpp ^
+    src\main.cpp res\app.res ^
     user32.lib gdi32.lib shell32.lib advapi32.lib gdiplus.lib ole32.lib ^
     /link /LTCG /OPT:REF /OPT:ICF /SUBSYSTEM:WINDOWS ^
     /OUT:bin\MacShakeCursor.exe

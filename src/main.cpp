@@ -599,7 +599,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     g_nid.uID = 1;
     g_nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     g_nid.uCallbackMessage = WM_TRAYICON;
-    g_nid.hIcon = LoadCursor(NULL, IDC_ARROW); // Clean system arrow icon
+    HICON hAppIcon = LoadIconW(hInstance, MAKEINTRESOURCE(IDI_APP_ICON));
+    if (!hAppIcon) hAppIcon = LoadIconW(NULL, IDI_APPLICATION);
+    g_nid.hIcon = hAppIcon;
     wcscpy_s(g_nid.szTip, L"MacShake Cursor - Shaking mouse enlarges pointer");
     Shell_NotifyIconW(NIM_ADD, &g_nid);
 

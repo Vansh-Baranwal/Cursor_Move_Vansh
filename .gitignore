@@ -1,0 +1,15 @@
+# Build artifacts
+*.obj
+*.o
+*.res
+*.exp
+*.lib
+*.pdb
+*.ilk
+
+# Temporary / system files
+*.log
+*.tmp
+Thumbs.db
+Desktop.ini
+~$*
