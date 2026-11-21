@@ -1,6 +1,21 @@
 # Cursor_Vansh for Windows
 
+[![Latest Release](https://img.shields.io/github/v/release/Vansh-Baranwal/Cursor_Move_Vansh?style=flat-square&color=blue)](https://github.com/Vansh-Baranwal/Cursor_Move_Vansh/releases/latest)
+[![Downloads](https://img.shields.io/badge/download-v1.0.0-success?style=flat-square)](https://github.com/Vansh-Baranwal/Cursor_Move_Vansh/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-lightgrey?style=flat-square)](https://github.com/Vansh-Baranwal/Cursor_Move_Vansh)
+
 A hyper-optimized, standalone Windows background utility that brings the iconic macOS **"Shake mouse pointer to locate"** feature to Windows 10 & 11.
+
+---
+
+## 📥 Download
+
+You can download the latest pre-compiled binaries directly from the **[Releases](https://github.com/Vansh-Baranwal/Cursor_Move_Vansh/releases/latest)** tab:
+
+| File | Description | Download | Size |
+|---|---|:---:|:---:|
+| **`Cursor_Vansh.zip`** | **Recommended:** Complete package with 1-click install/uninstall scripts | [**Download ZIP**](https://github.com/Vansh-Baranwal/Cursor_Move_Vansh/releases/latest/download/Cursor_Vansh.zip) | ~79 KB |
+| **`Cursor_Vansh.exe`** | Standalone portable executable (runs directly, zero installation needed) | [**Download EXE**](https://github.com/Vansh-Baranwal/Cursor_Move_Vansh/releases/latest/download/Cursor_Vansh.exe) | ~157 KB |
 
 ---
 
