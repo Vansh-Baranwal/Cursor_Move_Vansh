@@ -1,0 +1,47 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Version tag (e.g. v1.0.0)'
+        required: false
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Publish Release Assets
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSVC Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Compile Cursor_Vansh
+        run: |
+          .\build.bat
+
+      - name: Package Release ZIP
+        run: |
+          powershell -Command "Compress-Archive -Path 'bin\Cursor_Vansh.exe', 'install.bat', 'uninstall.bat', 'start.bat', 'stop.bat', 'README.md' -DestinationPath 'Cursor_Vansh.zip' -Force"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || inputs.tag_name }}
+          name: "Cursor_Vansh ${{ github.ref_type == 'tag' && github.ref_name || inputs.tag_name }}"
+          files: |
+            bin/Cursor_Vansh.exe
+            Cursor_Vansh.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
