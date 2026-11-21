@@ -1,3 +1,4 @@
+#define OEMRESOURCE
 #define WIN32_LEAN_AND_MEAN
 #ifndef UNICODE
 #define UNICODE
@@ -159,13 +160,66 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 }
 
 // ---------------------------------------------------------------------------
+// Hardware System Cursor Management (Hides native pointer during enlargement)
+// ---------------------------------------------------------------------------
+static bool g_system_cursor_hidden = false;
+
+static const DWORD kSystemCursorIds[] = {
+    OCR_NORMAL,       // 32512 - Standard arrow
+    OCR_IBEAM,        // 32513 - I-beam
+    OCR_WAIT,         // 32514 - Wait / hourglass
+    OCR_CROSS,        // 32515 - Crosshair
+    OCR_UP,           // 32516 - Up arrow
+    OCR_SIZENWSE,     // 32642 - Resize NW-SE
+    OCR_SIZENESW,     // 32643 - Resize NE-SW
+    OCR_SIZEWE,       // 32644 - Resize W-E
+    OCR_SIZENS,       // 32645 - Resize N-S
+    OCR_SIZEALL,      // 32646 - Move all
+    OCR_NO,           // 32648 - Slashed circle
+    OCR_HAND,         // 32649 - Hand / link
+    OCR_APPSTARTING   // 32650 - App starting
+};
+
+void HideSystemCursor() {
+    if (g_system_cursor_hidden) return;
+
+    int w = GetSystemMetrics(SM_CXCURSOR);
+    int h = GetSystemMetrics(SM_CYCURSOR);
+    if (w <= 0 || h <= 0) { w = 32; h = 32; }
+
+    int row_bytes = ((w + 15) / 16) * 2;
+    int mask_size = row_bytes * h;
+    std::vector<BYTE> and_mask(mask_size, 0xFF); // 1 = transparent
+    std::vector<BYTE> xor_mask(mask_size, 0x00);
+
+    for (DWORD id : kSystemCursorIds) {
+        HCURSOR hBlank = CreateCursor(GetModuleHandle(NULL), 0, 0, w, h, and_mask.data(), xor_mask.data());
+        if (hBlank) {
+            SetSystemCursor(hBlank, id); // SetSystemCursor takes ownership and destroys hBlank
+        }
+    }
+    g_system_cursor_hidden = true;
+}
+
+void RestoreSystemCursor() {
+    if (!g_system_cursor_hidden) return;
+    SystemParametersInfo(SPI_SETCURSORS, 0, NULL, 0);
+    g_system_cursor_hidden = false;
+}
+
+// ---------------------------------------------------------------------------
 // Overlay Window Rendering & Animation
 // ---------------------------------------------------------------------------
+void UpdateAnimationTick();
+
 void TriggerShakeAnimation() {
     ULONGLONG now = GetTickCount64();
     g_last_shake_tick = now;
 
     if (g_anim_state == AnimState::Idle) {
+        // Hide the native hardware cursor so our enlarged vector cursor is completely in front!
+        HideSystemCursor();
+
         g_anim_state = AnimState::Growing;
         g_anim_start_tick = now;
         g_current_scale = 1.0f;
@@ -179,6 +233,9 @@ void TriggerShakeAnimation() {
                      pt.y - CursorRenderer::HOTSPOT_OFFSET, 
                      CursorRenderer::BUFFER_SIZE, CursorRenderer::BUFFER_SIZE, 
                      SWP_NOACTIVATE | SWP_SHOWWINDOW);
+
+        // Render first frame immediately for instant responsiveness
+        UpdateAnimationTick();
 
         // Start 60 FPS animation timer
         SetTimer(g_overlay_hwnd, TIMER_ANIMATION_ID, 16, nullptr);
@@ -232,6 +289,7 @@ void UpdateAnimationTick() {
     case AnimState::Shrinking: {
         int elapsed = static_cast<int>(now - g_anim_start_tick);
         if (elapsed >= g_config.shrink_ms) {
+            RestoreSystemCursor();
             g_anim_state = AnimState::Idle;
             ShowWindow(g_overlay_hwnd, SW_HIDE);
             KillTimer(g_overlay_hwnd, TIMER_ANIMATION_ID);
@@ -393,7 +451,13 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
         }
         return 0;
 
+    case WM_QUERYENDSESSION:
+    case WM_ENDSESSION:
+        RestoreSystemCursor();
+        return TRUE;
+
     case WM_DESTROY:
+        RestoreSystemCursor();
         if (g_nid.hWnd) {
             Shell_NotifyIconW(NIM_DELETE, &g_nid);
         }
@@ -493,6 +557,7 @@ bool PerformStatus() {
 // WinMain Entry Point
 // ---------------------------------------------------------------------------
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow) {
+    atexit(RestoreSystemCursor);
     // Parse command line arguments
     int argc = 0;
     LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
@@ -613,6 +678,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     }
 
     // Cleanup on exit
+    RestoreSystemCursor();
     if (g_mouse_hook) {
         UnhookWindowsHookEx(g_mouse_hook);
         g_mouse_hook = nullptr;
