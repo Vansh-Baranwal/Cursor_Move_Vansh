@@ -1,12 +1,12 @@
-# MacShake Cursor for Windows
+# Cursor_Vansh for Windows
 
 A hyper-optimized, standalone Windows background utility that brings the iconic macOS **"Shake mouse pointer to locate"** feature to Windows 10 & 11.
 
 ---
 
-## What is the macOS Shake Cursor Effect?
+## What is the Shake Cursor Effect?
 
-Introduced in OS X El Capitan and present in macOS Sonoma & Sequoia, this feature temporarily magnifies the mouse cursor when you rapidly shake or wiggle your mouse, making it effortless to spot on dense desktop layouts or multi-monitor setups.
+When you lose track of your cursor and shake the mouse rapidly back and forth, the cursor temporarily magnifies and then smoothly shrinks back to its normal size.
 
 ### Kinematics & Mechanics
 * **Trigger Mechanism:** Unlike linear movement (such as fast flicking or swiping across screens), the feature specifically tracks **directional reversals (oscillations)** within a tight time window (~400 ms).
@@ -15,7 +15,7 @@ Introduced in OS X El Capitan and present in macOS Sonoma & Sequoia, this featur
   * **Stroke Distance:** Each stroke must exceed ~12–15 pixels (filtering out micro-tremors and gaming mouse sensor noise).
   * **Confinement Ratio:** Net bounding displacement must be significantly smaller than total distance traveled ($\frac{\text{Total Path}}{\text{Net Span}} \ge 1.65$). This prevents false triggers when moving rapidly across multiple monitors.
 * **Visual Scaling & Dynamics:**
-  * **Scale Factor:** Scales from normal size ($1.0\times$) up to $3.6\times$ maximum size.
+  * **Scale Multiplier:** Scales from normal size ($1.0\times$) up to $3.6\times$ maximum size.
   * **Growth Animation:** Snappy ease-out cubic curve over ~130 ms.
   * **Hold Duration:** Holds at peak scale for ~220 ms while movement continues.
   * **Shrink Animation:** Smooth ease-in curve over ~240 ms, fading seamlessly back to the standard cursor.
@@ -39,18 +39,18 @@ Introduced in OS X El Capitan and present in macOS Sonoma & Sequoia, this featur
 ### 1. Install (Run on Boot)
 Run `install.bat` or execute:
 ```cmd
-bin\MacShakeCursor.exe --install
+bin\Cursor_Vansh.exe --install
 ```
-* Automatically copies the program to `%LOCALAPPDATA%\MacShakeCursor\MacShakeCursor.exe`.
+* Automatically copies the program to `%LOCALAPPDATA%\Cursor_Vansh\Cursor_Vansh.exe`.
 * Registers in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
 * Starts immediately in your System Tray.
 
 ### 2. Running Standalone (Without Installing)
-Run `start.bat` or double-click `bin\MacShakeCursor.exe`. It runs quietly in the notification area.
+Run `start.bat` or double-click `bin\Cursor_Vansh.exe`. It runs quietly in the notification area.
 
 ### 3. System Tray Menu Options
-Right-click the icon in your Windows notification area (System Tray) to access:
-* **Test Cursor Shake Effect:** Instantly preview the enlargement animation.
+Right-click the icon in your Windows Taskbar / System Tray:
+* **Test Cursor Shake Effect:** Click to preview the enlargement animation.
 * **Start Automatically with Windows:** Toggle auto-start on or off anytime with one click.
 * **Cursor Appearance:**
   * *macOS Classic Pointer (Default):* Iconic black pointer with crisp white border and soft drop shadow.
@@ -65,7 +65,7 @@ Right-click the icon in your Windows notification area (System Tray) to access:
 ### 4. Uninstall
 Run `uninstall.bat` or execute:
 ```cmd
-bin\MacShakeCursor.exe --uninstall
+bin\Cursor_Vansh.exe --uninstall
 ```
 
 ---

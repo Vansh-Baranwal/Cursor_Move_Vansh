@@ -1,6 +1,6 @@
-# Runtime Verification and Benchmark Script for MacShakeCursor
+# Runtime Verification and Benchmark Script for Cursor_Vansh
 
-$exePath = "d:\Some_stuffs\Mics\Tools\Cursor_Move_Vansh\bin\MacShakeCursor.exe"
+$exePath = "d:\Some_stuffs\Mics\Tools\Cursor_Move_Vansh\bin\Cursor_Vansh.exe"
 if (-not (Test-Path $exePath)) {
     Write-Error "Binary not found at $exePath"
     exit 1

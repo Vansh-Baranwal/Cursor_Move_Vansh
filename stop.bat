@@ -1,9 +1,9 @@
 @echo off
 setlocal
 
-taskkill /f /im "MacShakeCursor.exe" >nul 2>&1
+taskkill /f /im "Cursor_Vansh.exe" >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
-    echo MacShake Cursor stopped.
+    echo Cursor_Vansh stopped.
 ) else (
-    echo MacShake Cursor was not running.
+    echo Cursor_Vansh was not running.
 )

@@ -1,4 +1,4 @@
-# Build artifacts
+# Build and intermediate artifacts
 *.obj
 *.o
 *.res
@@ -7,9 +7,20 @@
 *.pdb
 *.ilk
 
-# Temporary / system files
+# Test binaries
+tests/*.exe
+
+# Visual Studio / IDE temporary folders
+.vs/
+*.VC.db
+*.opendb
+
+# Runtime & configuration files
 *.log
 *.tmp
+config.ini
+
+# OS generated files
 Thumbs.db
 Desktop.ini
 ~$*

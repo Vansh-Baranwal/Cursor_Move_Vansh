@@ -20,13 +20,13 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName",      "Antigravity Tools"
-            VALUE "FileDescription",  "MacShake Cursor for Windows"
+            VALUE "CompanyName",      "Vansh Tools"
+            VALUE "FileDescription",  "Cursor_Vansh for Windows"
             VALUE "FileVersion",      "1.0.0.0"
-            VALUE "InternalName",     "MacShakeCursor"
-            VALUE "LegalCopyright",   "Copyright (C) 2026"
-            VALUE "OriginalFilename", "MacShakeCursor.exe"
-            VALUE "ProductName",      "MacShake Cursor"
+            VALUE "InternalName",     "Cursor_Vansh"
+            VALUE "LegalCopyright",   "Copyright (C) 2026 Vansh"
+            VALUE "OriginalFilename", "Cursor_Vansh.exe"
+            VALUE "ProductName",      "Cursor_Vansh"
             VALUE "ProductVersion",   "1.0.0.0"
         END
     END

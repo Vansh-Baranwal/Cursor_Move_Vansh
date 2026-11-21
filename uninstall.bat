@@ -3,14 +3,14 @@ setlocal
 cd /d "%~dp0"
 
 echo ========================================================
-echo   Uninstalling MacShake Cursor from Windows
+echo   Uninstalling Cursor_Vansh from Windows
 echo ========================================================
 echo.
 
-if exist "bin\MacShakeCursor.exe" (
-    "bin\MacShakeCursor.exe" --uninstall
+if exist "bin\Cursor_Vansh.exe" (
+    "bin\Cursor_Vansh.exe" --uninstall
 ) else (
-    reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "MacShakeCursor" /f >nul 2>&1
-    taskkill /f /im "MacShakeCursor.exe" >nul 2>&1
+    reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "Cursor_Vansh" /f >nul 2>&1
+    taskkill /f /im "Cursor_Vansh.exe" >nul 2>&1
     echo Uninstalled from startup and stopped.
 )

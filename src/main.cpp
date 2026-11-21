@@ -26,8 +26,8 @@
 // ---------------------------------------------------------------------------
 // Global Constants & State
 // ---------------------------------------------------------------------------
-static const wchar_t* const APP_NAME = L"MacShakeCursor";
-static const wchar_t* const APP_MUTEX_NAME = L"Global\\MacShakeCursor_SingleInstance_Mutex";
+static const wchar_t* const APP_NAME = L"Cursor_Vansh";
+static const wchar_t* const APP_MUTEX_NAME = L"Global\\Cursor_Vansh_SingleInstance_Mutex";
 static const wchar_t* const REG_RUN_KEY = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 static const UINT_PTR TIMER_ANIMATION_ID = 1001;
 
@@ -296,7 +296,7 @@ void ShowContextMenu(HWND hwnd) {
     GetCursorPos(&pt);
 
     HMENU hMenu = CreatePopupMenu();
-    InsertMenuW(hMenu, -1, MF_BYPOSITION | MF_STRING | MF_DISABLED, IDM_TITLE, L"MacShake Cursor (Active)");
+    InsertMenuW(hMenu, -1, MF_BYPOSITION | MF_STRING | MF_DISABLED, IDM_TITLE, L"Cursor_Vansh (Active)");
     InsertMenuW(hMenu, -1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
     InsertMenuW(hMenu, -1, MF_BYPOSITION | MF_STRING, IDM_TEST_SHAKE, L"Test Cursor Shake Effect");
     InsertMenuW(hMenu, -1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
@@ -445,11 +445,11 @@ bool PerformInstall() {
     }
 
     MessageBoxW(NULL, 
-        L"MacShake Cursor has been successfully installed!\n\n"
+        L"Cursor_Vansh has been successfully installed!\n\n"
         L"- It is running in your System Tray.\n"
         L"- It will start automatically every time Windows boots.\n"
         L"- Shake your mouse rapidly anytime to see your cursor enlarge!", 
-        L"MacShake Cursor Installed", MB_ICONINFORMATION);
+        L"Cursor_Vansh Installed", MB_ICONINFORMATION);
 
     return true;
 }
@@ -463,29 +463,29 @@ bool PerformUninstall() {
     }
 
     // 2. Terminate running instance if any
-    HWND hwnd = FindWindowW(L"MacShakeCursorHiddenClass", NULL);
+    HWND hwnd = FindWindowW(L"Cursor_VanshHiddenClass", NULL);
     if (hwnd) {
         PostMessageW(hwnd, WM_CLOSE, 0, 0);
     }
 
     MessageBoxW(NULL, 
-        L"MacShake Cursor has been removed from Windows startup.\n"
+        L"Cursor_Vansh has been removed from Windows startup.\n"
         L"The background program has been stopped.", 
-        L"MacShake Cursor Uninstalled", MB_ICONINFORMATION);
+        L"Cursor_Vansh Uninstalled", MB_ICONINFORMATION);
     return true;
 }
 
 bool PerformStatus() {
     bool running = false;
-    HWND existing = FindWindowW(L"MacShakeCursorHiddenClass", NULL);
+    HWND existing = FindWindowW(L"Cursor_VanshHiddenClass", NULL);
     if (existing) running = true;
     bool autostart = IsAutoStartEnabled();
 
-    std::wstring msg = L"MacShake Cursor Status:\n\n";
+    std::wstring msg = L"Cursor_Vansh Status:\n\n";
     msg += L"Running: " + std::wstring(running ? L"YES (Active in Background)" : L"NO (Not Running)") + L"\n";
     msg += L"Auto-Start with Windows: " + std::wstring(autostart ? L"YES (Enabled)" : L"NO (Disabled)") + L"\n";
 
-    MessageBoxW(NULL, msg.c_str(), L"MacShake Cursor Status", MB_ICONINFORMATION);
+    MessageBoxW(NULL, msg.c_str(), L"Cursor_Vansh Status", MB_ICONINFORMATION);
     return true;
 }
 
@@ -514,7 +514,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
                 return 0;
             }
             if (_wcsicmp(argv[i], L"--test") == 0 || _wcsicmp(argv[i], L"-test") == 0 || _wcsicmp(argv[i], L"/test") == 0) {
-                HWND existing = FindWindowW(L"MacShakeCursorHiddenClass", NULL);
+                HWND existing = FindWindowW(L"Cursor_VanshHiddenClass", NULL);
                 if (existing) {
                     PostMessageW(existing, WM_SHAKE_TRIGGERED, 0, 0);
                     LocalFree(argv);
@@ -529,7 +529,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     HANDLE hMutex = CreateMutexW(NULL, TRUE, APP_MUTEX_NAME);
     if (GetLastError() == ERROR_ALREADY_EXISTS) {
         // Trigger a test shake in existing instance to signal user it's already active
-        HWND existing = FindWindowW(L"MacShakeCursorHiddenClass", NULL);
+        HWND existing = FindWindowW(L"Cursor_VanshHiddenClass", NULL);
         if (existing) {
             PostMessageW(existing, WM_SHAKE_TRIGGERED, 0, 0);
         }
@@ -555,10 +555,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     wcMain.cbSize = sizeof(WNDCLASSEXW);
     wcMain.lpfnWndProc = MainWndProc;
     wcMain.hInstance = hInstance;
-    wcMain.lpszClassName = L"MacShakeCursorHiddenClass";
+    wcMain.lpszClassName = L"Cursor_VanshHiddenClass";
     RegisterClassExW(&wcMain);
 
-    g_main_hwnd = CreateWindowExW(0, L"MacShakeCursorHiddenClass", L"MacShakeCursorHidden", 
+    g_main_hwnd = CreateWindowExW(0, L"Cursor_VanshHiddenClass", L"Cursor_VanshHidden", 
                                   0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
 
     // Register layered overlay window class
@@ -567,13 +567,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     wcOverlay.lpfnWndProc = OverlayWndProc;
     wcOverlay.hInstance = hInstance;
     wcOverlay.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcOverlay.lpszClassName = L"MacShakeCursorOverlayClass";
+    wcOverlay.lpszClassName = L"Cursor_VanshOverlayClass";
     RegisterClassExW(&wcOverlay);
 
     // Create transparent, click-through, topmost, non-activating overlay window
     g_overlay_hwnd = CreateWindowExW(
         WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
-        L"MacShakeCursorOverlayClass", L"MacShakeCursorOverlay",
+        L"Cursor_VanshOverlayClass", L"Cursor_VanshOverlay",
         WS_POPUP,
         0, 0, CursorRenderer::BUFFER_SIZE, CursorRenderer::BUFFER_SIZE,
         NULL, NULL, hInstance, NULL);
@@ -586,7 +586,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     // Install low-level mouse hook
     g_mouse_hook = SetWindowsHookExW(WH_MOUSE_LL, LowLevelMouseProc, hInstance, 0);
     if (!g_mouse_hook) {
-        MessageBoxW(NULL, L"Failed to install mouse hook.", L"MacShakeCursor Error", MB_ICONERROR);
+        MessageBoxW(NULL, L"Failed to install mouse hook.", L"Cursor_Vansh Error", MB_ICONERROR);
         Gdiplus::GdiplusShutdown(g_gdiplus_token);
         if (hMutex) CloseHandle(hMutex);
         return 1;
@@ -602,7 +602,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     HICON hAppIcon = LoadIconW(hInstance, MAKEINTRESOURCE(IDI_APP_ICON));
     if (!hAppIcon) hAppIcon = LoadIconW(NULL, IDI_APPLICATION);
     g_nid.hIcon = hAppIcon;
-    wcscpy_s(g_nid.szTip, L"MacShake Cursor - Shaking mouse enlarges pointer");
+    wcscpy_s(g_nid.szTip, L"Cursor_Vansh - Shaking mouse enlarges pointer");
     Shell_NotifyIconW(NIM_ADD, &g_nid);
 
     // Main message pump
