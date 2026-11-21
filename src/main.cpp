@@ -46,6 +46,7 @@ struct AppConfig {
     int grow_ms = 130;
     int hold_ms = 220;
     int shrink_ms = 240;
+    bool pause_in_fullscreen = false;
 };
 
 static AppConfig g_config;
@@ -90,12 +91,15 @@ void LoadConfig() {
         g_config.style = static_cast<CursorStyle>(style);
         g_renderer.SetStyle(g_config.style);
     }
+
+    g_config.pause_in_fullscreen = (GetPrivateProfileIntW(L"Settings", L"PauseInFullscreen", 0, path.c_str()) != 0);
 }
 
 void SaveConfig() {
     std::wstring path = GetConfigFilePath();
     WritePrivateProfileStringW(L"Settings", L"Sensitivity", std::to_wstring(static_cast<int>(g_config.sensitivity)).c_str(), path.c_str());
     WritePrivateProfileStringW(L"Settings", L"Style", std::to_wstring(static_cast<int>(g_config.style)).c_str(), path.c_str());
+    WritePrivateProfileStringW(L"Settings", L"PauseInFullscreen", g_config.pause_in_fullscreen ? L"1" : L"0", path.c_str());
 }
 
 // ---------------------------------------------------------------------------
@@ -136,6 +140,104 @@ bool SetAutoStart(bool enable) {
 }
 
 // ---------------------------------------------------------------------------
+// Cursor Visibility & Gaming Detection
+// ---------------------------------------------------------------------------
+bool IsDefaultCursorVisible() {
+    CURSORINFO ci = { sizeof(CURSORINFO) };
+    if (!GetCursorInfo(&ci)) {
+        // Fallback: attach to active input desktop if called from background thread
+        HDESK hDesk = OpenInputDesktop(0, FALSE, DESKTOP_READOBJECTS | GENERIC_READ);
+        if (hDesk) {
+            SetThreadDesktop(hDesk);
+            CloseDesktop(hDesk);
+            if (!GetCursorInfo(&ci)) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    // 1. Must be currently visible (not hidden by ShowCursor(FALSE) in games)
+    if ((ci.flags & CURSOR_SHOWING) == 0) {
+        return false;
+    }
+
+    // 2. Must not be suppressed by touch or stylus
+    if (ci.flags & 2 /* CURSOR_SUPPRESSED */) {
+        return false;
+    }
+
+    // 3. Must have a valid cursor handle
+    if (ci.hCursor == NULL) {
+        return false;
+    }
+
+    // 4. Must not be trapped in a tiny clip box (games lock mouse to a 1x1 or tiny box for camera control)
+    RECT clip_rect = { 0 };
+    if (GetClipCursor(&clip_rect)) {
+        int w = clip_rect.right - clip_rect.left;
+        int h = clip_rect.bottom - clip_rect.top;
+        if (w > 0 && h > 0 && w <= 4 && h <= 4) {
+            return false;
+        }
+    }
+
+    // 5. Must not be a dummy 1x1 blank cursor (some games set a transparent 1x1 dummy cursor)
+    static HCURSOR s_last_cursor = NULL;
+    static bool s_last_valid = true;
+    if (ci.hCursor != s_last_cursor) {
+        s_last_cursor = ci.hCursor;
+        s_last_valid = true;
+
+        ICONINFO ii = { 0 };
+        if (GetIconInfo(ci.hCursor, &ii)) {
+            BITMAP bm = { 0 };
+            HBITMAP hbm = ii.hbmColor ? ii.hbmColor : ii.hbmMask;
+            if (hbm && GetObject(hbm, sizeof(BITMAP), &bm)) {
+                if (bm.bmWidth <= 1 && bm.bmHeight <= 1) {
+                    s_last_valid = false;
+                }
+            }
+            if (ii.hbmColor) DeleteObject(ii.hbmColor);
+            if (ii.hbmMask) DeleteObject(ii.hbmMask);
+        }
+    }
+
+    return s_last_valid;
+}
+
+bool IsForegroundWindowFullscreen() {
+    HWND hwnd = GetForegroundWindow();
+    if (!hwnd || hwnd == GetDesktopWindow() || hwnd == GetShellWindow()) {
+        return false;
+    }
+
+    RECT appBounds;
+    if (GetWindowRect(hwnd, &appBounds)) {
+        HMONITOR hMon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
+        MONITORINFO mi = { sizeof(MONITORINFO) };
+        if (GetMonitorInfo(hMon, &mi)) {
+            bool isFull = (appBounds.left <= mi.rcMonitor.left &&
+                           appBounds.top <= mi.rcMonitor.top &&
+                           appBounds.right >= mi.rcMonitor.right &&
+                           appBounds.bottom >= mi.rcMonitor.bottom);
+            if (isFull) {
+                wchar_t className[256] = { 0 };
+                GetClassNameW(hwnd, className, 256);
+                if (_wcsicmp(className, L"Progman") == 0 || 
+                    _wcsicmp(className, L"WorkerW") == 0 ||
+                    _wcsicmp(className, L"Shell_TrayWnd") == 0) {
+                    return false;
+                }
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// ---------------------------------------------------------------------------
 // Low-Level Mouse Hook (WH_MOUSE_LL)
 // ---------------------------------------------------------------------------
 LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
@@ -144,6 +246,14 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
         if (pMouse) {
             DWORD time_ms = pMouse->time;
             if (time_ms == 0) time_ms = GetTickCount();
+
+            // When idle, only track movements if the default cursor is actively visible on screen!
+            if (g_anim_state == AnimState::Idle) {
+                if (!IsDefaultCursorVisible() || (g_config.pause_in_fullscreen && IsForegroundWindowFullscreen())) {
+                    g_detector.Reset(); // Clear movement buffer so game aim moves are ignored!
+                    return CallNextHookEx(g_mouse_hook, nCode, wParam, lParam);
+                }
+            }
 
             if (g_detector.OnMouseMove(pMouse->pt.x, pMouse->pt.y, time_ms)) {
                 // Post shake message to main thread, keeping hook execution instantaneous!
@@ -217,6 +327,11 @@ void TriggerShakeAnimation() {
     g_last_shake_tick = now;
 
     if (g_anim_state == AnimState::Idle) {
+        if (!IsDefaultCursorVisible() || (g_config.pause_in_fullscreen && IsForegroundWindowFullscreen())) {
+            g_detector.Reset();
+            return;
+        }
+
         // Hide the native hardware cursor so our enlarged vector cursor is completely in front!
         HideSystemCursor();
 
@@ -364,6 +479,11 @@ void ShowContextMenu(HWND hwnd) {
     if (IsAutoStartEnabled()) autostart_flags |= MF_CHECKED;
     InsertMenuW(hMenu, -1, autostart_flags, IDM_AUTOSTART, L"Start Automatically with Windows");
 
+    // Pause in fullscreen games toggle
+    UINT fs_flags = MF_BYPOSITION | MF_STRING;
+    if (g_config.pause_in_fullscreen) fs_flags |= MF_CHECKED;
+    InsertMenuW(hMenu, -1, fs_flags, IDM_PAUSE_FULLSCREEN, L"Pause in Fullscreen Games");
+
     // Cursor Style Submenu
     HMENU hStyleMenu = CreatePopupMenu();
     UINT mac_flags = MF_BYPOSITION | MF_STRING | (g_config.style == CursorStyle::MacClassic ? MF_CHECKED : 0);
@@ -411,6 +531,10 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
             break;
         case IDM_AUTOSTART:
             SetAutoStart(!IsAutoStartEnabled());
+            break;
+        case IDM_PAUSE_FULLSCREEN:
+            g_config.pause_in_fullscreen = !g_config.pause_in_fullscreen;
+            SaveConfig();
             break;
         case IDM_STYLE_MAC:
             g_config.style = CursorStyle::MacClassic;
